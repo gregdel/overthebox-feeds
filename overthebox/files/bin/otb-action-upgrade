@@ -5,13 +5,7 @@
 set -e
 set -o pipefail
 
-if [ -n "$1" ]; then
-	. /lib/overthebox
-
-	# always rewrite distfeeds.conf if the channel is not develop
-	channel=$(otb_json_get "$1" "arguments.release_channel")
-	[ "$channel" = "develop" ] || otb-action-updateReleaseChannel
-fi
+otb-check-upgrades "$1" || exit 0
 
 opkg update
 

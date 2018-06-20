@@ -140,3 +140,7 @@ otb_save_action_id() {
 	commit overthebox
 	EOF
 }
+
+otb_get_package_base_url() {
+	grep core /etc/opkg/distfeeds.conf | cut -d' ' -f3 | sed s/\\packages$//
+}

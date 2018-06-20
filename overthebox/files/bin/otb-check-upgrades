@@ -1,0 +1,40 @@
+#!/bin/sh
+# shellcheck disable=SC1091
+# vim: set noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 :
+
+set -e
+set -o pipefail
+
+. /lib/overthebox
+. /etc/os-release
+
+# channel=
+# if [ -n "$1" ]; then
+# 	. /lib/overthebox
+# 	channel=$(otb_json_get "$1" "arguments.release_channel")
+# else
+# 	channel=$(uci -q get overthebox.me.release_channel)
+# fi
+
+# # always rewrite distfeeds.conf if the channel is not develop
+# [ "$channel" = "develop" ] || otb-action-updateReleaseChannel
+
+current_version=${LEDE_RELEASE##* }
+
+url="$(otb_get_package_base_url)config.seed"
+expected_version=$(curl --silent --show-error --max-time 1 "$url" |\
+	grep 'CONFIG_VERSION_CODE=' |\
+	cut -d'=' -f2 |\
+	sed s/\"//g)
+
+available_upgrades=$(opkg list-upgradable | wc -l)
+
+jq -n \
+	--arg local_system_version "$current_version" \
+	--arg remote_system_version "$expected_version" \
+	--arg available_packages_upgrade "$available_upgrades" \
+	'{
+		local_system_version: $local_system_version,
+		remote_system_version: $remote_system_version,
+		available_packages_upgrade: $available_packages_upgrade,
+	}'

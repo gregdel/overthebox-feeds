@@ -8,5 +8,12 @@ set -o pipefail
 . /lib/overthebox
 . /etc/os-release
 
-otb_device_get release_channel | jq -r '.feeds[] | [.type,.name,.url] | join(" ")' | \
+data=$(otb_device_get release_channel)
+
+# Update the relase channel name
+uci -q set overthebox.me.release_channel="$(jq -r -n --argjson data "$data" '$data.name')"
+uci -q commit
+
+# Update the distfeeds configuration
+jq -r -n --argjson data "$data" '$data.feeds[] | [.type,.name,.url] | join(" ")' | \
 	sed "s^@ARCH@^$LEDE_ARCH^; s^@BOARD@^$LEDE_BOARD^" > /etc/opkg/distfeeds.conf
